@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as promClient from 'prom-client';
 import { Logger } from '../logger';
 import { RenderingConfig } from '../config';
+const axios = require('axios').default;
 
 export interface HTTPHeaders {
   'Accept-Language'?: string;
@@ -60,8 +61,14 @@ export class Browser {
     let browser;
 
     try {
+      const token = await this.getToken();
       const launcherOptions = this.getLauncherOptions({});
-      browser = await puppeteer.launch(launcherOptions);
+      // browser = await puppeteer.launch(launcherOptions);
+      browser = await puppeteer.connect({
+        browserWSEndpoint: token,
+        defaultViewport: null,
+      });
+
       return await browser.version();
     } finally {
       if (browser) {
@@ -70,6 +77,19 @@ export class Browser {
         await browser.close();
       }
     }
+  }
+
+  async getToken(): Promise<string> {
+    const env = Object.assign({}, process.env);
+    const chromeDevToolsHost = env.PUPPETEER_SERVER;
+    const config = {
+      method: 'get',
+      url: `http://${chromeDevToolsHost}/json/version`,
+      headers: {},
+    };
+    const { data } = await axios(config);
+    console.log(data);
+    return data.webSocketDebuggerUrl;
   }
 
   async start(): Promise<void> {}
@@ -170,10 +190,16 @@ export class Browser {
     let page: any;
 
     try {
+      const token = await this.getToken();
       browser = await this.withTimingMetrics<puppeteer.Browser>(() => {
         this.validateImageOptions(options);
         const launcherOptions = this.getLauncherOptions(options);
-        return puppeteer.launch(launcherOptions);
+
+        // return puppeteer.launch(launcherOptions);
+        return puppeteer.connect({
+          browserWSEndpoint: token,
+          defaultViewport: null,
+        });
       }, 'launch');
 
       page = await this.withTimingMetrics<puppeteer.Page>(() => {
