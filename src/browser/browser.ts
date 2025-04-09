@@ -11,6 +11,7 @@ import { RenderingConfig } from '../config/rendering';
 import { ImageRenderOptions, RenderOptions } from '../types';
 import { StepTimeoutError } from './error';
 import { getPDFOptionsFromURL } from './pdf';
+import axios from 'axios';
 
 export interface Metrics {
   durationHistogram: promClient.Histogram;
@@ -37,8 +38,14 @@ export class Browser {
     let browser;
 
     try {
+      const token = await this.getToken();
       const launcherOptions = this.getLauncherOptions({});
-      browser = await puppeteer.launch(launcherOptions);
+      // browser = await puppeteer.launch(launcherOptions);
+      browser = await puppeteer.connect({
+        browserWSEndpoint: token,
+        defaultViewport: null,
+      });
+
       return await browser.version();
     } finally {
       if (browser) {
@@ -49,7 +56,25 @@ export class Browser {
     }
   }
 
-  async start(): Promise<void> {}
+  async getToken(): Promise<string> {
+    const env = Object.assign({}, process.env);
+    const chromeDevToolsHost = env.PUPPETEER_SERVER;
+
+    if (chromeDevToolsHost.startWith('http')) {
+      const config = {
+        method: 'get',
+        url: `http://${chromeDevToolsHost}/json/version`,
+        headers: {},
+      };
+      const { data } = await axios(config);
+      console.log(data);
+      return data.webSocketDebuggerUrl;
+    } else {
+      return chromeDevToolsHost
+    }
+  }
+
+  async start(): Promise<void> { }
 
   validateRenderOptions(options: RenderOptions) {
     if (options.url.startsWith(`socket://`)) {
