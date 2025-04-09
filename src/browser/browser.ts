@@ -51,7 +51,7 @@ export class Browser {
       if (browser) {
         const pages = await browser.pages();
         await Promise.all(pages.map((page) => page.close()));
-        await browser.close();
+        // await browser.close();
       }
     }
   }
@@ -59,18 +59,19 @@ export class Browser {
   async getToken(): Promise<string> {
     const env = Object.assign({}, process.env);
     const chromeDevToolsHost = env.PUPPETEER_SERVER;
-
-    if (chromeDevToolsHost.startWith('http')) {
+    console.log('chromeDevToolsHost', chromeDevToolsHost);
+    if (chromeDevToolsHost && chromeDevToolsHost.startsWith('http')) {
       const config = {
         method: 'get',
-        url: `http://${chromeDevToolsHost}/json/version`,
+        url: `${chromeDevToolsHost}/json/version`,
         headers: {},
       };
+      console.log('config', config);
       const { data } = await axios(config);
       console.log(data);
       return data.webSocketDebuggerUrl;
     } else {
-      return chromeDevToolsHost
+      return chromeDevToolsHost as string;
     }
   }
 
@@ -311,7 +312,7 @@ export class Browser {
         await page.close();
       }
       if (browser) {
-        await browser.close();
+        // await browser.close();
       }
     }
   }
@@ -462,7 +463,7 @@ export class Browser {
         await page.close();
       }
       if (browser) {
-        await browser.close();
+        // await browser.close();
       }
     }
   }

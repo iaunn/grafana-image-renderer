@@ -1,6 +1,6 @@
 {
   "service": {
-    "host": "localhost",
+    "host": "0.0.0.0",
     "port": 8081,
 
     "metrics": {
@@ -39,13 +39,6 @@
       "uploadThroughput": 4000000,
       "latency": 100,
       "offline": false
-    },
-
-    "clustering": {
-      "monitor": true,
-      "mode": "browser",
-      "maxConcurrency": 5,
-      "timeout": 30
     },
 
     "verboseLogging": true,
